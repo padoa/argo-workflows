@@ -172,9 +172,9 @@ func (s gatekeeper) getClients(ctx context.Context, req interface{}) (*servertyp
 	md, _ := metadata.FromIncomingContext(ctx)
 	authorizations := getAuthHeaders(md)
 	// Required for GetMode() with Server auth when no auth header specified
-	if len(authorizations) == 0 {
-		authorizations = append(authorizations, "")
-	}
+	// if len(authorizations) == 0 {
+	// 	authorizations = append(authorizations, "")
+	// }
 	valid := false
 	var mode Mode
 	var authorization string
@@ -191,6 +191,13 @@ func (s gatekeeper) getClients(ctx context.Context, req interface{}) (*servertyp
 		return nil, nil, status.Error(codes.Unauthenticated, "token not valid for running mode")
 	}
 	switch mode {
+	case Static:
+		restConfig, clients, err := s.clientForAuthorization(authorization)
+		if err != nil {
+			return nil, nil, status.Error(codes.Unauthenticated, err.Error())
+		}
+		claims, _ := serviceaccount.ClaimSetFor(restConfig)
+		return clients, claims, nil
 	case Client:
 		restConfig, clients, err := s.clientForAuthorization(authorization)
 		if err != nil {
